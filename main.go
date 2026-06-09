@@ -8,14 +8,14 @@ import (
 
 func main() {
 	r := gin.Default()
-    r.GET("/", func(ctx *gin.Context) {
-        ctx.JSON(200, gin.H{
-            "message": "Hey Go URL Shortener!",
-        })
-    })
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": "Hey Go URL Shortener!",
+		})
+	})
 
-    err := r.Run(":8080")
-    if err != nil {
-        panic(fmt.Sprintf("Failed to start the web server - Error: %v", err))
-    }
+	err := r.Run(":8080")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to start the web server - Error: %v", err))
+	}
 }
