@@ -63,7 +63,7 @@ async function shorten() {
   hideResult();
 
   try {
-    const res = await fetch('/create-short-url', {
+      const res = await fetch('/api/shorten', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ long_url: longUrl, user_id: userId })
