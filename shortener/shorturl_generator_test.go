@@ -9,16 +9,16 @@ import (
 const UserId = "e0dba740-fc4b-4977-872c-d360239e6b1a"
 
 func TestShortLinkGenerator(t *testing.T) {
-	initialLink_1 := "https://www.guru3d.com/news-story/spotted-ryzen-threadripper-pro-3995wx-processor-with-8-channel-ddr4,2.html"
+	initialLink_1 := "https://go.dev"
 	shortLink_1 := GenerateShortLink(initialLink_1, UserId)
 
-	initialLink_2 := "https://www.eddywm.com/lets-build-a-url-shortener-in-go-with-redis-part-2-storage-layer/"
+	initialLink_2 := "https://kubernetes.io"
 	shortLink_2 := GenerateShortLink(initialLink_2, UserId)
 
-	initialLink_3 := "https://spectrum.ieee.org/automaton/robotics/home-robots/hello-robots-stretch-mobile-manipulator"
+	initialLink_3 := "https://github.com"
 	shortLink_3 := GenerateShortLink(initialLink_3, UserId)
 
-	assert.Equal(t, shortLink_1, "jTa4L57P")
-	assert.Equal(t, shortLink_2, "d66yfx7N")
-	assert.Equal(t, shortLink_3, "dhZTayYQ")
+	assert.Equal(t, shortLink_1, "aW21oCzU")
+	assert.Equal(t, shortLink_2, "9PTviFx4")
+	assert.Equal(t, shortLink_3, "cCd1qpQg")
 }
