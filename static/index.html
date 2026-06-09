@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL Shortener</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #2C2C2C; }
+.card { background: #3a3a3a; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.3); width: 100%; max-width: 480px; }
+h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #E4E4E4; }
+p.sub { color: #aaa; margin-bottom: 1.5rem; font-size: 0.9rem; }
+label { display: block; font-size: 0.85rem; font-weight: 600; color: #E4E4E4; margin-bottom: 0.3rem; }
+input[type="text"] { width: 100%; padding: 0.65rem 0.75rem; border: 1px solid #555; border-radius: 6px; font-size: 0.95rem; margin-bottom: 1rem; outline: none; transition: border 0.2s; background: #2C2C2C; color: #E4E4E4; }
+input[type="text"]:focus { border-color: #A8DADC; }
+button { width: 100%; padding: 0.7rem; background: #B39CD0; color: #2C2C2C; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+button:hover { background: #c5b0de; }
+button:disabled { background: #666; cursor: not-allowed; color: #999; }
+#result { margin-top: 1.25rem; padding: 1rem; border-radius: 6px; display: none; word-break: break-all; }
+#result.success { background: #3a5a4a; color: #A8DADC; display: block; }
+#result.error { background: #5a3a3a; color: #FFC1CC; display: block; }
+#result .result-row { display: flex; align-items: center; gap: 0.5rem; }
+#result .result-row a { color: #A8DADC; font-weight: 600; flex: 1; }
+#result .result-row button { flex: 0 0 auto; width: auto; padding: 0.4rem 0.75rem; font-size: 0.85rem; background: #B39CD0; color: #2C2C2C; white-space: nowrap; }
+#result .result-row button:hover { background: #c5b0de; }
+#result .result-row button.copied { background: #A8DADC; }
+.spinner { display: none; text-align: center; margin-top: 1rem; }
+.spinner.show { display: block; }
+.spinner::after { content: ''; display: inline-block; width: 24px; height: 24px; border: 3px solid #555; border-top-color: #B39CD0; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+<h1>URL Shortener</h1>
+<p class="sub">Paste a long URL and get a short link</p>
+<label for="longUrl">Long URL</label>
+<input type="text" id="longUrl" placeholder="https://example.com/very/long/url" autofocus>
+<label for="userId">User ID (optional)</label>
+<input type="text" id="userId" placeholder="auto-generated if empty">
+<button id="submitBtn" onclick="shorten()">Shorten</button>
+<div id="result"></div>
+<div class="spinner" id="spinner"></div>
+</div>
+<script>
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+async function shorten() {
+  const longUrl = document.getElementById('longUrl').value.trim();
+  if (!longUrl) { showResult('Please enter a URL', 'error'); return; }
+
+  const userId = document.getElementById('userId').value.trim() || uuid();
+  const btn = document.getElementById('submitBtn');
+  const spinner = document.getElementById('spinner');
+
+  btn.disabled = true;
+  spinner.classList.add('show');
+  hideResult();
+
+  try {
+    const res = await fetch('/create-short-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ long_url: longUrl, user_id: userId })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Something went wrong');
+    showResult(
+      '<div class="result-row">' +
+        '<a href="' + data.short_url + '" target="_blank">' + data.short_url + '</a>' +
+        '<button onclick="copyUrl(this)" data-url="' + data.short_url + '">Copy</button>' +
+      '</div>',
+      'success'
+    );
+  } catch (err) {
+    showResult(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove('show');
+  }
+}
+
+function copyUrl(btn) {
+  navigator.clipboard.writeText(btn.dataset.url).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function showResult(html, type) {
+  const el = document.getElementById('result');
+  el.className = type;
+  el.innerHTML = html;
+}
+
+function hideResult() {
+  document.getElementById('result').className = '';
+  document.getElementById('result').innerHTML = '';
+}
+</script>
+</body>
+</html>
