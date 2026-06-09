@@ -16,11 +16,6 @@ bin/
 go.work
 go.work.sum
 
-# Swagger generated files
-docs/swagger.json
-docs/swagger.yaml
-docs/docs.go
-
 # IDE files
 .idea/
 .vscode/
