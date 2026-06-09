@@ -1,0 +1,149 @@
+basePath: /
+definitions:
+  internal_handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  internal_handler.ShortenRequest:
+    properties:
+      alias:
+        type: string
+      expires_in_hours:
+        type: integer
+      long_url:
+        type: string
+    required:
+    - long_url
+    type: object
+  internal_handler.ShortenResponse:
+    properties:
+      expires_at:
+        type: string
+      short_code:
+        type: string
+      short_url:
+        type: string
+    type: object
+  internal_handler.StatsResponse:
+    properties:
+      click_count:
+        type: integer
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      is_custom_alias:
+        type: boolean
+      long_url:
+        type: string
+      short_code:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: A production-ready URL shortener with caching, analytics, and observability.
+  title: URL Shortener API
+  version: "1.0"
+paths:
+  /{code}:
+    get:
+      parameters:
+      - description: Short code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "301":
+          description: Redirect
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Redirect to the original URL
+      tags:
+      - urls
+  /api/{code}:
+    get:
+      parameters:
+      - description: Short code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.ShortenResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Get URL metadata
+      tags:
+      - urls
+  /api/{code}/stats:
+    get:
+      parameters:
+      - description: Short code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.StatsResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Get click statistics for a short URL
+      tags:
+      - urls
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: URL to shorten
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.ShortenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handler.ShortenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Create a shortened URL
+      tags:
+      - urls
+swagger: "2.0"
