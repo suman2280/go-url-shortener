@@ -37,7 +37,9 @@ func TestPostgresIntegration_CreateAndGet(t *testing.T) {
 		t.Fatalf("failed to connect to postgres: %v", err)
 	}
 
-	db.AutoMigrate(&domain.UrlMapping{})
+	if err := db.AutoMigrate(&domain.UrlMapping{}); err != nil {
+		t.Fatalf("failed to migrate: %v", err)
+	}
 	db.Where("1 = 1").Delete(&domain.UrlMapping{})
 
 	repo := repository.NewPostgresUrlRepository(db)
@@ -71,17 +73,21 @@ func TestPostgresIntegration_CodeExists(t *testing.T) {
 		t.Fatalf("failed to connect to postgres: %v", err)
 	}
 
-	db.AutoMigrate(&domain.UrlMapping{})
+	if err := db.AutoMigrate(&domain.UrlMapping{}); err != nil {
+		t.Fatalf("failed to migrate: %v", err)
+	}
 	db.Where("1 = 1").Delete(&domain.UrlMapping{})
 
 	repo := repository.NewPostgresUrlRepository(db)
 
 	now := time.Now().Add(1 * time.Hour)
-	repo.Create(&domain.UrlMapping{
+	if err := repo.Create(&domain.UrlMapping{
 		ShortCode: "exists1",
 		LongUrl:   "https://example.com",
 		ExpiresAt: &now,
-	})
+	}); err != nil {
+		t.Fatalf("failed to create mapping: %v", err)
+	}
 
 	exists, err := repo.CodeExists("exists1")
 	if err != nil {
@@ -105,7 +111,7 @@ func TestRedisIntegration(t *testing.T) {
 
 	addr := getEnvOrDefault("REDIS_ADDR", "localhost:6379")
 	rdb := redis.NewClient(&redis.Options{Addr: addr})
-	defer rdb.Close()
+	defer func() { _ = rdb.Close() }()
 
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
@@ -124,7 +130,7 @@ func TestRedisIntegration(t *testing.T) {
 		t.Errorf("expected testvalue, got %s", val)
 	}
 
-	rdb.Del(ctx, "testkey")
+	_ = rdb.Del(ctx, "testkey")
 }
 
 func TestServiceIntegration_GetByCode(t *testing.T) {
@@ -136,7 +142,9 @@ func TestServiceIntegration_GetByCode(t *testing.T) {
 		t.Fatalf("failed to connect to postgres: %v", err)
 	}
 
-	db.AutoMigrate(&domain.UrlMapping{})
+	if err := db.AutoMigrate(&domain.UrlMapping{}); err != nil {
+		t.Fatalf("failed to migrate: %v", err)
+	}
 	db.Where("1 = 1").Delete(&domain.UrlMapping{})
 
 	repo := repository.NewPostgresUrlRepository(db)
@@ -144,7 +152,7 @@ func TestServiceIntegration_GetByCode(t *testing.T) {
 	// Add cache dependency - direct Redis for simplicity
 	addr := getEnvOrDefault("REDIS_ADDR", "localhost:6379")
 	rdb := redis.NewClient(&redis.Options{Addr: addr})
-	defer rdb.Close()
+	defer func() { _ = rdb.Close() }()
 
 	// Use a minimal cache interface
 	testCache := &testCache{client: rdb}
@@ -152,11 +160,13 @@ func TestServiceIntegration_GetByCode(t *testing.T) {
 	svc := service.NewUrlService(repo, testCache, 12*time.Hour)
 
 	now := time.Now().Add(1 * time.Hour)
-	repo.Create(&domain.UrlMapping{
+	if err := repo.Create(&domain.UrlMapping{
 		ShortCode: "svc001",
 		LongUrl:   "https://example.com/service",
 		ExpiresAt: &now,
-	})
+	}); err != nil {
+		t.Fatalf("failed to create mapping: %v", err)
+	}
 
 	got, err := svc.GetByCode(context.Background(), "svc001")
 	if err != nil {

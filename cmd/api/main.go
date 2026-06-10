@@ -97,10 +97,18 @@ func main() {
 	<-quit
 	log.Println("shutting down server...")
 	workerCancel()
-	redisCache.Close()
+	if err := redisCache.Close(); err != nil {
+		log.Printf("error closing redis: %v", err)
+	}
 
-	sqlDB, _ := db.DB()
-	sqlDB.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("error getting sql db: %v", err)
+	} else {
+		if err := sqlDB.Close(); err != nil {
+			log.Printf("error closing database: %v", err)
+		}
+	}
 
 	log.Println("server exited")
 }
